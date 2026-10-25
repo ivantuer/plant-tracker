@@ -2,7 +2,7 @@ import { signal } from '@preact/signals';
 import { del, get, set } from 'idb-keyval';
 import { DEFAULT_SERVER } from './config';
 import { applySynced, hooks, patchSettings, sharedData, state } from './store';
-import { canon, liveProtocols, liveUrl, mergeData, newVault, syncOnce, SyncAuthError, type Vault } from './sync-core';
+import { canon, createInvite, liveProtocols, liveUrl, mergeData, newVault, redeemInvite, syncOnce, SyncAuthError, type Vault } from './sync-core';
 import type { Log } from './types';
 
 const VAULT_KEY = 'plant-care-vault';
@@ -10,6 +10,8 @@ const EMAIL_KEY = 'plant-care-google';
 
 export const vault = signal<Vault | null>(null);
 export const sync = signal({ live: false, busy: false, error: '', at: 0 });
+/** An invite link opened on this device, waiting for the person to confirm joining. */
+export const pendingInvite = signal('');
 /** The Google account this device signed in with. */
 export const googleEmail = signal('');
 /** Called with entries that the other person added, so the UI can say so. */
@@ -155,16 +157,29 @@ export async function connectGoogle(idToken: string) {
   if (!state.value.settings.me.trim()) patchSettings({ me: nameFrom(idToken) });
 }
 
-/** Lets another Google account open this household by signing in with that email. */
-export async function shareWith(email: string) {
-  const v = vault.value;
-  if (!v) throw new Error('household');
-  await postJson('/google/share', { path: v.path, bearer: v.bearer, key: v.key, email });
+/** Joins the household behind a single-use invite link. */
+export async function joinHousehold(text: string) {
+  await setVault(await redeemInvite(text));
+  await syncNow();
+  if (sync.value.error) { const msg = sync.value.error; await setVault(null); patch({ error: '' }); throw new Error(msg); }
+  googleEmail.value = '';
+  await del(EMAIL_KEY);
+}
+
+/** A fresh single-use invite link for the other person. */
+export async function newInviteLink(): Promise<string> {
+  if (!vault.value) throw new Error('household');
+  return `${location.origin}${location.pathname}#join=${await createInvite(vault.value)}`;
 }
 
 export const leaveHousehold = async () => { await setVault(null); googleEmail.value = ''; await del(EMAIL_KEY); };
 
 export function startSync() {
+  const hash = location.hash;
+  if (hash.startsWith('#join=')) {
+    pendingInvite.value = hash;
+    history.replaceState(null, '', location.pathname + location.search);
+  }
   hooks.dataChanged = () => {
     if (!vault.value) { afterSync.run(); return; }
     clearTimeout(debounce);

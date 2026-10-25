@@ -6,10 +6,10 @@ import { lang, t, taskName } from './i18n';
 import { pendingSpecies } from './meta';
 import { Plants } from './plants';
 import { Settings } from './settings';
-import { ready, state } from './store';
-import { partner } from './sync';
+import { patchSettings, ready, state } from './store';
+import { joinHousehold, partner, pendingInvite, vault } from './sync';
 import { Today } from './today';
-import { Toast, showToast } from './ui';
+import { Sheet, Toast, showToast } from './ui';
 
 type Tab = 'today' | 'plants' | 'calendar' | 'guide' | 'settings';
 
@@ -67,6 +67,26 @@ export function App() {
         ))}
       </nav>
       <Toast />
+      {pendingInvite.value && !vault.value && <InviteSheet />}
     </div>
+  );
+}
+
+/** An invite link opened on this device: confirm before merging its data into the shared household. */
+function InviteSheet() {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const me = state.value.settings.me;
+  const join = async () => {
+    setBusy(true);
+    try { await joinHousehold(pendingInvite.value); pendingInvite.value = ''; } catch (e) { setErr((e as Error).message === 'used' ? t('err.used') : t('err.sync')); } finally { setBusy(false); }
+  };
+  return (
+    <Sheet title={t('invited')} onClose={() => (pendingInvite.value = '')}>
+      <p class="muted">{t('invitedText')}</p>
+      {!me && <input type="text" placeholder={t('yourNamePlaceholder')} onInput={(e) => patchSettings({ me: (e.target as HTMLInputElement).value })} />}
+      {err && <p class="error small">{err}</p>}
+      <button class="btn primary block" disabled={busy || !state.value.settings.me.trim()} onClick={join}>{t('joinHousehold')}</button>
+    </Sheet>
   );
 }
