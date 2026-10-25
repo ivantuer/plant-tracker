@@ -5,6 +5,9 @@ import type { Lang } from './types';
 type Dict = Record<string, string>;
 
 const en: Dict = {
+  findPlant: 'Find a plant', findPlantHint: 'Type a name in any language, e.g. monstera, фікус, Ficus benjamina', findPlantPlaceholder: 'Search any plant…', variety: 'Variety (cultivar)', varietyPlaceholder: 'e.g. Thai Constellation',
+  inGuide: 'In the guide with typical care', 'rank.genus': 'genus', 'rank.family': 'family', searching: 'Searching…', searchOffline: 'Search needs an internet connection.', noResults: 'No plants found.', searchCredit: 'Search: iNaturalist',
+  searchAnyPlant: 'Search any plant…', searchAnyHint: 'Searches the whole plant kingdom online as you type. Plants from our guide come with typical care.', guideTitle: 'Plants with typical care', noCareInfo: 'No typical care for this plant yet: add watering and other routines yourself in the Routines tab.',
   invitePartner: 'Invite partner', haveInvite: 'I have an invite link', joinHousehold: 'Join household', invited: 'You were invited', invitedText: 'Join the shared household to see and log care together. Your data will be merged with the shared data.',
   inviteOnce: 'This link works once and expires in 7 days. Send it only to the person you want to join. To invite someone else, make a new one.', copyLink: 'Copy link', shareLink: 'Share…', copied: 'Invite link copied', inviteMessage: 'Join me in caring for our plants',
   'err.invite': 'That invite link is not valid.', 'err.used': 'This invite was already used or has expired. Ask for a new one.',
@@ -39,7 +42,7 @@ const en: Dict = {
   times: '{n} times',
   // plants
   'plants.sub': 'Your collection', 'routines.sub': 'What repeats, and how often', 'plants.seg': 'Plants', 'routines.seg': 'Routines',
-  species: 'Species', otherPlant: 'Other / not in the guide', plantNamePlaceholder: 'e.g. Monty', place: 'Place', placePlaceholder: 'Kitchen windowsill', plantedOn: 'Planted on', origin: 'Origin', color: 'Colour',
+  species: 'Plant', otherPlant: 'Other / not in the guide', plantNamePlaceholder: 'e.g. Monty', place: 'Place', placePlaceholder: 'Kitchen windowsill', plantedOn: 'Planted on', origin: 'Origin', color: 'Colour',
   'origin.seed': 'From seed', 'origin.cutting': 'Cutting', 'origin.bought': 'Bought', 'origin.gift': 'Gift',
   addCareToo: 'Also add watering and feeding for this species', deletePlantConfirm: 'Delete {name} with its whole history?',
   timeline: 'Growth timeline', afterPlanting: '{d} days after planting', plantRoutines: 'Routines', noRoutinesForPlant: 'No routines for this plant yet.', addCare: 'Add watering and feeding for this species',
@@ -60,7 +63,7 @@ const en: Dict = {
   'humidity.low': 'Low', 'humidity.medium': 'Medium', 'humidity.high': 'High',
   'info.disclaimer': 'Typical starting values: adjust to your pot size, light and room.',
   // guide
-  'guide.sub': 'Care, pests and the seasonal plan', 'guide.pests': 'Pests', 'guide.season': 'By month', 'guide.plants': 'Plants', addThisPlant: 'Add to my plants',
+  'guide.sub': 'Care, pests and the seasonal plan', 'guide.pests': 'Pests', 'guide.season': 'By month', 'guide.plants': 'Find plants', addThisPlant: 'Add to my plants',
   pestPlan: 'Pest protection plan', pestPlanText: 'The routine most growers in Ukraine follow: inspect often, wash the leaves, humidify in the heating season, one bio treatment in spring and one in autumn.', addPestPlan: 'Add the plan for all plants', planAdded: 'Pest protection plan added', addPlantFirst: 'Add a plant first.',
   nowInSeason: 'Watch for in {m}', commonPests: 'Common pests and diseases', mostCommon: 'Most common', pestDisclaimer: 'Follow the product label, treat in a ventilated place and keep treated plants away from pets and children. Quarantine new plants for 2 weeks.',
   'pest.signs': 'What it looks like', 'pest.what': 'What to do', 'pest.product': 'Products', 'pest.course': 'Treat {n} times, {d} days apart — the eggs hatch between treatments.',
@@ -75,6 +78,9 @@ const en: Dict = {
 };
 
 const uk: Dict = {
+  findPlant: 'Знайти рослину', findPlantHint: 'Назва будь-якою мовою: монстера, ficus, Ficus benjamina', findPlantPlaceholder: 'Пошук будь-якої рослини…', variety: 'Сорт', varietyPlaceholder: 'напр. Thai Constellation',
+  inGuide: 'У довіднику з типовим доглядом', 'rank.genus': 'рід', 'rank.family': 'родина', searching: 'Шукаю…', searchOffline: 'Для пошуку потрібен інтернет.', noResults: 'Нічого не знайдено.', searchCredit: 'Пошук: iNaturalist',
+  searchAnyPlant: 'Пошук будь-якої рослини…', searchAnyHint: 'Шукає по всьому рослинному світу онлайн, поки ви друкуєте. Рослини з нашого довідника мають типовий догляд.', guideTitle: 'Рослини з типовим доглядом', noCareInfo: 'Для цієї рослини ще немає типового догляду: додайте полив та інші процедури самі у вкладці «Розклад».',
   invitePartner: 'Запросити партнера', haveInvite: 'У мене є посилання-запрошення', joinHousehold: 'Приєднатися', invited: 'Вас запросили', invitedText: 'Приєднайтесь до спільного доступу, щоб бачити й вести догляд разом. Ваші дані об’єднаються зі спільними.',
   inviteOnce: 'Посилання діє один раз і спливає за 7 днів. Надсилайте його лише тому, кого хочете запросити. Щоб запросити іншого, створіть нове.', copyLink: 'Копіювати', shareLink: 'Поділитися…', copied: 'Посилання скопійовано', inviteMessage: 'Доглядаймо за рослинами разом',
   'err.invite': 'Це посилання-запрошення недійсне.', 'err.used': 'Запрошення вже використане або прострочене. Попросіть нове.',
@@ -110,7 +116,7 @@ const uk: Dict = {
   'n.year.one': '{n} рік', 'n.year.few': '{n} роки', 'n.year.many': '{n} років', 'n.year.other': '{n} року',
   times: '{n} р.',
   'plants.sub': 'Ваша колекція', 'routines.sub': 'Що повторюється і як часто', 'plants.seg': 'Рослини', 'routines.seg': 'Розклад',
-  species: 'Вид', otherPlant: 'Інша / немає в довіднику', plantNamePlaceholder: 'напр. Монті', place: 'Місце', placePlaceholder: 'Підвіконня на кухні', plantedOn: 'Дата посадки', origin: 'Походження', color: 'Колір',
+  species: 'Рослина', otherPlant: 'Інша / немає в довіднику', plantNamePlaceholder: 'напр. Монті', place: 'Місце', placePlaceholder: 'Підвіконня на кухні', plantedOn: 'Дата посадки', origin: 'Походження', color: 'Колір',
   'origin.seed': 'З насіння', 'origin.cutting': 'Живець', 'origin.bought': 'Куплена', 'origin.gift': 'Подарунок',
   addCareToo: 'Додати полив і підживлення для цього виду', deletePlantConfirm: 'Видалити {name} разом з усією історією?',
   timeline: 'Історія росту', afterPlanting: 'через {d} дн. після посадки', plantRoutines: 'Розклад', noRoutinesForPlant: 'Для цієї рослини ще немає розкладу.', addCare: 'Додати полив і підживлення для цього виду',
@@ -127,7 +133,7 @@ const uk: Dict = {
   'light.shade': 'Витримує тінь', 'light.part': 'Розсіяне світло / напівтінь', 'light.bright': 'Яскраве, без прямого полуденного сонця', 'light.sun': 'Повне сонце',
   'humidity.low': 'Низька', 'humidity.medium': 'Середня', 'humidity.high': 'Висока',
   'info.disclaimer': 'Типові стартові значення: підлаштуйте під розмір горщика, світло та кімнату.',
-  'guide.sub': 'Догляд, шкідники та сезонний план', 'guide.pests': 'Шкідники', 'guide.season': 'По місяцях', 'guide.plants': 'Рослини', addThisPlant: 'Додати до моїх рослин',
+  'guide.sub': 'Догляд, шкідники та сезонний план', 'guide.pests': 'Шкідники', 'guide.season': 'По місяцях', 'guide.plants': 'Пошук рослин', addThisPlant: 'Додати до моїх рослин',
   pestPlan: 'План захисту від шкідників', pestPlanText: 'Схема, якої дотримується більшість: часто оглядати, мити листя, зволожувати в опалювальний сезон, раз навесні та раз восени — біологічна обробка.', addPestPlan: 'Додати план для всіх рослин', planAdded: 'План захисту додано', addPlantFirst: 'Спершу додайте рослину.',
   nowInSeason: 'Чого остерігатись у {m}', commonPests: 'Поширені шкідники та хвороби', mostCommon: 'Найчастіше', pestDisclaimer: 'Дотримуйтесь інструкції на упаковці, обробляйте в провітрюваному місці й тримайте оброблені рослини подалі від тварин і дітей. Нові рослини тримайте окремо 2 тижні.',
   'pest.signs': 'Як виглядає', 'pest.what': 'Що робити', 'pest.product': 'Засоби', 'pest.course': 'Обробіть {n} р. з інтервалом {d} дн. — між обробками виходять нові личинки.',

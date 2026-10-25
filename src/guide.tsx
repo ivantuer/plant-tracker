@@ -3,13 +3,17 @@ import { addInterval, localDate } from './dates';
 import { DatePicker } from './datepicker';
 import { monthLong, seasonLabel } from './format';
 import { lang, t } from './i18n';
-import { pendingSpecies } from './meta';
+import { pendingPlant } from './meta';
 import { MONTH_PLAN, PESTS, type Pest } from './pests';
 import { PEST_PLAN } from './presets';
 import { CareInfo } from './plants';
 import { SPECIES, type Species } from './species';
 import { addPestPlan, addTreatment, state } from './store';
+import type { Plant } from './types';
 import { Chip, Empty, Field, Seg, Sheet, Topbar, showToast } from './ui';
+import { PlantSearch } from './search';
+import { blankPlant } from './sheets';
+import { fromHit, presetFromSpecies } from './pick';
 
 type View = 'plants' | 'pests' | 'season';
 
@@ -31,12 +35,13 @@ export function Guide({ goPlants }: { goPlants: () => void }) {
 
 function SpeciesList({ goPlants }: { goPlants: () => void }) {
   const [open, setOpen] = useState<Species | null>(null);
-  const [q, setQ] = useState('');
-  const list = SPECIES.filter((s) => s.name[lang.value].toLowerCase().includes(q.trim().toLowerCase()));
+  const add = (p: Partial<Plant>) => { pendingPlant.value = p; setOpen(null); goPlants(); };
   return (
     <>
-      <input type="text" placeholder={t('search')} value={q} onInput={(e) => setQ((e.target as HTMLInputElement).value)} style={{ marginBottom: '12px' }} />
-      {list.map((s) => (
+      <PlantSearch placeholder={t('searchAnyPlant')} onPick={(h) => (h.kind === 'guide' ? setOpen(h.species) : add(fromHit(blankPlant(0), h)))} />
+      <p class="hint" style={{ margin: '6px 2px 12px' }}>{t('searchAnyHint')}</p>
+      <div class="sec">{t('guideTitle')}</div>
+      {SPECIES.map((s) => (
         <button key={s.key} class="species-row" onClick={() => setOpen(s)}>
           <span class="badge" style={{ width: '40px', height: '40px', fontSize: '22px', background: 'var(--field)' }}>{s.emoji}</span>
           <span class="item-text"><b>{s.name[lang.value]}</b><span class="small muted">{t(`light.${s.light}`)} · {t('info.waterVal', { s: String(s.waterSummer), w: String(s.waterWinter) })}</span></span><span class="chev">›</span>
@@ -45,7 +50,7 @@ function SpeciesList({ goPlants }: { goPlants: () => void }) {
       {open && (
         <Sheet title={`${open.emoji} ${open.name[lang.value]}`} onClose={() => setOpen(null)}>
           <CareInfo s={open} />
-          <button class="btn primary block" onClick={() => { pendingSpecies.value = open.key; setOpen(null); goPlants(); }}>{t('addThisPlant')}</button>
+          <button class="btn primary block" onClick={() => add(presetFromSpecies(open.key))}>{t('addThisPlant')}</button>
         </Sheet>
       )}
     </>

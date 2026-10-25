@@ -9,6 +9,12 @@ export interface Plant {
   name: string;
   /** Key from the species guide, if it is one of the known ones. */
   species?: string;
+  /** Scientific name picked from the online search, e.g. "Monstera deliciosa". */
+  latin?: string;
+  /** iNaturalist taxon id of that name. */
+  taxonId?: number;
+  /** Cultivar / variety (сорт), free text, e.g. "Thai Constellation". */
+  variety?: string;
   emoji: string;
   color: string;
   /** Room or windowsill. */

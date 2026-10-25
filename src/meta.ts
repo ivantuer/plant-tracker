@@ -1,8 +1,8 @@
 import { signal } from '@preact/signals';
-import type { MilestoneKind } from './types';
+import type { MilestoneKind, Plant } from './types';
 
-/** Set from the guide to open the new-plant form with a species chosen (an empty string means no species). */
-export const pendingSpecies = signal<string | undefined>(undefined);
+/** Set from the guide to open the new-plant form with a plant already chosen. */
+export const pendingPlant = signal<Partial<Plant> | undefined>(undefined);
 
 export type EventKind = 'plant' | MilestoneKind;
 

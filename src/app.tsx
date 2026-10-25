@@ -3,7 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { Calendar } from './calendar';
 import { Guide } from './guide';
 import { lang, t, taskName } from './i18n';
-import { pendingSpecies } from './meta';
+import { pendingPlant } from './meta';
 import { Plants } from './plants';
 import { Settings } from './settings';
 import { patchSettings, ready, state } from './store';
@@ -47,7 +47,7 @@ export function App() {
 
   if (!ready.value) return null;
   // The guide hands over a species to add; show the plants tab, which opens the form.
-  const shown: Tab = pendingSpecies.value !== undefined ? 'plants' : tab;
+  const shown: Tab = pendingPlant.value !== undefined ? 'plants' : tab;
   return (
     <div class="shell">
       <div class="aurora" aria-hidden="true"><i /><i /><i /></div>
@@ -60,7 +60,7 @@ export function App() {
       </main>
       <nav class="tabs">
         {(Object.keys(ICONS) as Tab[]).map((k) => (
-          <button key={k} class={shown === k ? 'on' : ''} onClick={() => { pendingSpecies.value = undefined; setTab(k); }} aria-current={shown === k ? 'page' : undefined}>
+          <button key={k} class={shown === k ? 'on' : ''} onClick={() => { pendingPlant.value = undefined; setTab(k); }} aria-current={shown === k ? 'page' : undefined}>
             <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d={ICONS[k]} fill={k === 'plants' ? 'none' : 'currentColor'} stroke={k === 'plants' ? 'currentColor' : 'none'} stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
             <span>{t(`tab.${k}`)}</span>
           </button>

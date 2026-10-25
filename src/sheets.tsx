@@ -7,6 +7,9 @@ import type { Item } from './care';
 import { KINDS, kindMeta, type EventKind } from './meta';
 import { addMilestone, logCare, removeLog, removeMilestone, removePlant, removeTask, saveLog, saveMilestone, savePlant, saveTask, state, addSpeciesCare, uid, nextOrder } from './store';
 import { SPECIES, speciesByKey, PLANT_COLORS } from './species';
+import { PlantSearch } from './search';
+import { fromHit } from './pick';
+import type { Hit } from './taxa';
 import type { Milestone, Plant, Task, Unit } from './types';
 import { Avatar, Chip, Field, Seg, Sheet, showToast } from './ui';
 import { lang } from './i18n';
@@ -136,17 +139,13 @@ export function EventSheet({ plantId, day, kind, existing, onClose }: { plantId?
 
 // ---- a plant ---------------------------------------------------------------------------------------------
 
-export function PlantForm({ plant, isNew, species, onClose }: { plant: Plant; isNew?: boolean; species?: string; onClose: () => void }) {
-  const [x, setX] = useState<Plant>(species ? { ...plant, species, ...fromSpecies(species) } : plant);
+export function PlantForm({ plant, isNew, preset, onClose }: { plant: Plant; isNew?: boolean; preset?: Partial<Plant>; onClose: () => void }) {
+  const [x, setX] = useState<Plant>(preset ? { ...plant, ...preset } : plant);
   const [care, setCare] = useState(!!isNew);
   const set = (p: Partial<Plant>) => setX({ ...x, ...p });
   const sp = speciesByKey(x.species);
-  // Picking a species fills the emoji, and the name too unless the user already typed their own.
-  const pick = (key: string) => {
-    const next = speciesByKey(key);
-    const own = x.name.trim() && x.name !== speciesByKey(x.species)?.name[lang.value];
-    setX({ ...x, species: next?.key, ...(next ? { emoji: next.emoji, ...(own ? {} : { name: next.name[lang.value] }) } : {}) });
-  };
+  // A search result fills in the scientific name, links the guide's typical care when we have it, and names the plant.
+  const applyHit = (h: Hit) => setX((cur) => fromHit(cur, h));
   const save = () => {
     const { updatedAt: _stamp, ...rest } = x;
     const p = { ...rest, name: x.name.trim() };
@@ -156,16 +155,14 @@ export function PlantForm({ plant, isNew, species, onClose }: { plant: Plant; is
   };
   return (
     <Sheet title={isNew ? t('addPlant') : t('editPlant')} onClose={onClose}>
-      <Field label={t('species')}>
-        <select value={x.species ?? ''} onChange={(e) => pick((e.target as HTMLSelectElement).value)}>
-          <option value="">{t('otherPlant')}</option>
-          {SPECIES.map((s) => <option key={s.key} value={s.key}>{s.emoji} {s.name[lang.value]}</option>)}
-        </select>
+      <Field label={t('species')} hint={t('findPlantHint')}>
+        <PlantSearch onPick={applyHit} value={x.latin ? `${sp?.name[lang.value] ?? x.latin}${sp ? ` (${x.latin})` : ''}` : sp?.name[lang.value]} onClear={() => set({ species: undefined, latin: undefined, taxonId: undefined })} />
       </Field>
       <div class="grid2">
         <Field label={t('name')}><input type="text" value={x.name} placeholder={t('plantNamePlaceholder')} onInput={(e) => set({ name: (e.target as HTMLInputElement).value })} /></Field>
         <Field label={t('emoji')}><input type="text" value={x.emoji} maxLength={4} onInput={(e) => set({ emoji: (e.target as HTMLInputElement).value })} /></Field>
       </div>
+      <Field label={t('variety')}><input type="text" value={x.variety ?? ''} placeholder={t('varietyPlaceholder')} onInput={(e) => set({ variety: (e.target as HTMLInputElement).value || undefined })} /></Field>
       <Field label={t('place')}><input type="text" value={x.place ?? ''} placeholder={t('placePlaceholder')} onInput={(e) => set({ place: (e.target as HTMLInputElement).value || undefined })} /></Field>
       <div class="grid2">
         <Field label={t('plantedOn')}><DatePicker value={x.plantedOn ?? ''} onChange={(v) => set({ plantedOn: v || undefined })} max={localDate()} clearable /></Field>
@@ -183,7 +180,5 @@ export function PlantForm({ plant, isNew, species, onClose }: { plant: Plant; is
     </Sheet>
   );
 }
-
-const fromSpecies = (key: string) => { const s = speciesByKey(key); return s ? { emoji: s.emoji, name: s.name[lang.value] } : {}; };
 
 export const blankPlant = (n: number): Plant => ({ id: uid(), name: '', emoji: '🪴', color: PLANT_COLORS[n % PLANT_COLORS.length], updatedAt: '' });

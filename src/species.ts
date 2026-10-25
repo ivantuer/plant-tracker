@@ -69,3 +69,18 @@ export const GROWING = [4, 5, 6, 7, 8, 9];
 export const DORMANT = [10, 11, 12, 1, 2, 3];
 
 export const PLANT_COLORS = ['#3fae6a', '#7bc043', '#2bb3a0', '#e0a526', '#e0605c', '#d66aa8', '#8b6fd6', '#4a90d9'];
+
+/** Scientific-name prefixes of the guide's plants, to link an online search result to its typical care. Specific names come first. */
+const LATIN: Record<string, string[]> = {
+  monstera: ['monstera'], 'ficus-benjamina': ['ficus benjamina'], 'ficus-elastica': ['ficus elastica'], spathiphyllum: ['spathiphyllum'],
+  sansevieria: ['dracaena trifasciata', 'sansevieria', 'dracaena angolensis'], zamioculcas: ['zamioculcas'], pothos: ['epipremnum'], chlorophytum: ['chlorophytum'],
+  orchid: ['phalaenopsis'], pelargonium: ['pelargonium'], aloe: ['aloe'], cactus: ['cactaceae', 'mammillaria', 'opuntia', 'echinopsis', 'gymnocalycium'], echeveria: ['echeveria', 'sempervivum', 'crassula', 'sedum'],
+  dracaena: ['dracaena'], begonia: ['begonia'], saintpaulia: ['saintpaulia', 'streptocarpus ionanthus'], hibiscus: ['hibiscus rosa-sinensis', 'hibiscus'], hoya: ['hoya'], calathea: ['calathea', 'goeppertia', 'maranta'],
+  ivy: ['hedera'], anthurium: ['anthurium'], cyclamen: ['cyclamen'], lemon: ['citrus'], chili: ['capsicum'], herbs: ['ocimum', 'mentha', 'petroselinum', 'rosmarinus', 'thymus'], tomato: ['solanum lycopersicum'],
+};
+
+export const speciesForLatin = (latin?: string) => {
+  const l = (latin ?? '').toLowerCase();
+  const key = l && Object.keys(LATIN).find((k) => LATIN[k].some((p) => l.startsWith(p)));
+  return key ? speciesByKey(key) : undefined;
+};

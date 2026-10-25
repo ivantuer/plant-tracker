@@ -3,7 +3,7 @@ import { allItems } from './care';
 import { localDate } from './dates';
 import { ageText, dueText, everyLabel, fmtDay, nameOf, seasonLabel } from './format';
 import { lang, t } from './i18n';
-import { kindMeta, pendingSpecies } from './meta';
+import { kindMeta, pendingPlant } from './meta';
 import { PRESETS } from './presets';
 import { blankPlant, blankTask, EventSheet, LogSheet, PlantForm, TaskSheet } from './sheets';
 import { SPECIES, speciesByKey, type Species } from './species';
@@ -15,11 +15,11 @@ type View = 'plants' | 'routines';
 
 export function Plants() {
   const [view, setView] = useState<View>('plants');
-  const [form, setForm] = useState(pendingSpecies.value !== undefined);
+  const [form, setForm] = useState(pendingPlant.value !== undefined);
   const [open, setOpen] = useState<string | null>(null);
   const s = state.value;
-  const adding = pendingSpecies.value || undefined;
-  const close = () => { setForm(false); pendingSpecies.value = undefined; };
+  const preset = pendingPlant.value;
+  const close = () => { setForm(false); pendingPlant.value = undefined; };
   return (
     <>
       <Topbar title={t('tab.plants')} sub={t(view === 'plants' ? 'plants.sub' : 'routines.sub')}>
@@ -31,7 +31,7 @@ export function Plants() {
         s.plants.length ? <div class="plant-grid">{s.plants.map((p) => <PlantCard key={p.id} p={p} onOpen={() => setOpen(p.id)} />)}</div>
           : <Empty emoji="🪴" title={t('noPlants')} text={t('noPlantsText')}><button class="btn primary" onClick={() => setForm(true)}>{t('addPlant')}</button></Empty>
       ) : <Routines />}
-      {form && <PlantForm isNew plant={blankPlant(s.plants.length)} species={adding} onClose={close} />}
+      {form && <PlantForm isNew plant={blankPlant(s.plants.length)} preset={preset} onClose={close} />}
       {open && s.plants.some((p) => p.id === open) && <PlantSheet id={open} onClose={() => setOpen(null)} />}
     </>
   );
@@ -46,7 +46,7 @@ function PlantCard({ p, onOpen }: { p: Plant; onOpen: () => void }) {
     <button class="plant-card" onClick={onOpen}>
       <Avatar plant={p} size={52} />
       <b>{p.name}</b>
-      <span class="small muted">{[sp?.name[lang.value], p.place].filter(Boolean).join(' · ') || ' '}</span>
+      <span class="small muted">{[sp?.name[lang.value] ?? p.latin, p.variety, p.place].filter(Boolean).join(' · ') || ' '}</span>
       {p.plantedOn && <span class="small">🪴 {ageText(p.plantedOn)}</span>}
       {last && <span class="small">{kindMeta(last.kind).emoji} {t(`kind.${last.kind}`)} · {fmtDay(last.day)}</span>}
       {next && <span class={`small due ${next.status}`}>{next.task.emoji} {dueText(next.days)}</span>}
@@ -96,7 +96,7 @@ function PlantSheet({ id, onClose }: { id: string; onClose: () => void }) {
     <Sheet title={`${p.emoji} ${p.name}`} onClose={onClose}>
       <div class="row gap">
         <Avatar plant={p} size={52} />
-        <div class="grow"><b>{sp?.name[lang.value] ?? t('otherPlant')}</b><div class="small muted">{[p.place, p.origin && t(`origin.${p.origin}`)].filter(Boolean).join(' · ')}</div></div>
+        <div class="grow"><b>{sp?.name[lang.value] ?? p.latin ?? t('otherPlant')}</b>{p.variety && <div class="small">{t('variety')}: {p.variety}</div>}<div class="small muted">{[p.latin && sp ? p.latin : '', p.place, p.origin && t(`origin.${p.origin}`)].filter(Boolean).join(' · ')}</div></div>
         <button class="btn small-btn" onClick={() => setEdit(true)}>{t('edit')}</button>
       </div>
 
@@ -122,7 +122,7 @@ function PlantSheet({ id, onClose }: { id: string; onClose: () => void }) {
         {sp && !hasSpeciesCare(id) && <button class="btn block" onClick={() => addSpeciesCare(p)}>{t('addCare')}</button>}
       </div>
 
-      {sp && <CareInfo s={sp} />}
+      {sp ? <CareInfo s={sp} /> : <p class="note">{t('noCareInfo')}</p>}
       {p.notes && <p class="note">{p.notes}</p>}
     </Sheet>
   );
