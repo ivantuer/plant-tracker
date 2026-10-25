@@ -1,6 +1,4 @@
-/**
- * Address of the sync Worker, e.g. 'https://plantcare-sync.<you>.workers.dev' (see worker/README.md).
- * Can also be typed into Settings on a device, which overrides this. The server knows nothing about plants,
- * so the Dog Care server address works here too.
- */
+// Public identifiers, built into the app so no device ever asks for an address or an ID.
+// Neither value is a secret: the server only accepts Google tokens issued for this client ID.
 export const DEFAULT_SERVER = 'https://plantcare-sync.savings-sync-worker.workers.dev';
+export const GOOGLE_CLIENT_ID = '48421767098-s12lbcksebhdo5hiano0u26edjugif7k.apps.googleusercontent.com';

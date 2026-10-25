@@ -5,20 +5,18 @@ import type { Lang } from './types';
 type Dict = Record<string, string>;
 
 const en: Dict = {
+  signedInAs: 'Signed in as {email}', signOut: 'Sign out', shareTitle: 'Share with someone', shareHint: 'Enter their Google email. When they sign in with Google, they see the same plants.', share: 'Share', shared: 'Shared with {email}',
+  'err.google': 'Could not load Google sign-in. Check your connection.', 'err.owner': 'This server belongs to another Google account.',
+  googlePrivacy: 'Your plants are encrypted on this device. The server keeps the key sealed so your Google account can open them on any device.',
   app: 'Plant Care',
   'sync.live': 'Live', 'sync.idle': 'Connected', 'sync.off': 'Offline', 'sync.bad': 'Signed out',
   'digest.title': '🌿 {n} for your plants today', 'digest.more': '+{n} more', 'digest.generic': '🌿 Plant care reminder',
   you: 'You', yourName: 'Your name', yourNameHint: 'Shown next to what you log', yourNamePlaceholder: 'e.g. Ivan',
-  household: 'Shared household', householdOn: 'Everything you and your partner log appears on both phones within a second. It is end-to-end encrypted: the server cannot read it.',
-  householdOff: 'Care for the plants together with someone else. You both see changes instantly.', invitePartner: 'Invite partner', syncNow: 'Sync now', leave: 'Leave', leaveConfirm: 'Stop syncing on this phone? Your data stays here.',
-  server: 'Sync server', serverHint: 'Address of your Cloudflare Worker (the Dog Care one works too)', createHousehold: 'Create shared household', syncedAt: 'synced {time}', inviteLink: 'Invite link', joinHousehold: 'Join household',
-  invited: 'You were invited', invitedText: 'Join the shared household to see and log care together. Your data will be merged with the shared data.',
-  inviteOnce: 'This link works once and expires in 7 days. Send it only to the person you want to join. To invite someone else, make a new one.', copyLink: 'Copy link', shareLink: 'Share…', copied: 'Invite link copied', inviteMessage: 'Join me in caring for our plants',
-  noServerHint: 'Set the sync server address first.', 'err.invite': 'That invite link is not valid.', 'err.used': 'This invite was already used or has expired. Ask for a new one.', 'err.sync': 'Could not reach the sync server.',
+  household: 'Sync and sharing', householdOn: 'The same Google account opens the same plants on any device. Changes appear within a second.',
+  householdOff: 'Sign in with Google to sync your plants between devices and get reminders even when the app is closed.', syncNow: 'Sync now', leave: 'Leave', leaveConfirm: 'Stop syncing on this phone? Your data stays here.', syncedAt: 'synced {time}', 'err.sync': 'Could not reach the sync server.',
   'err.auth': 'The server no longer accepts this device. Leave the household and join again with a new invite.', 'err.denied': 'Notifications are blocked. Allow them in your browser or phone settings.', 'err.vapid': 'The server has no push keys set up yet.', 'err.backup': 'That file is not a Plant Care backup.',
   noNotifications: 'This browser does not support notifications. Use the calendar export below.', notifyMe: 'Remind me', remindAt: 'Remind at', remindAtHint: 'Local time of day', testReminder: 'Send a test reminder',
   iosInstall: 'On iPhone, add the app to your Home Screen (Share → Add to Home Screen) to get reminders.', localOnly: 'Reminders arrive while the app is open. Join a household to also get them when it is closed.',
-  partnerDid: '{by}: {what}',
   'tab.today': 'Today', 'tab.plants': 'Plants', 'tab.calendar': 'Calendar', 'tab.guide': 'Guide', 'tab.settings': 'Settings',
   undo: 'Undo', close: 'Close', all: 'All', add: 'Add', save: 'Save', delete: 'Delete', edit: 'Edit', name: 'Name', emoji: 'Emoji', note: 'Note', date: 'Date', plant: 'Plant', search: 'Search…',
   today: 'today', yesterday: 'yesterday', ago: '{d} ago', allYear: 'All year', allPlants: 'All plants', notSet: 'Not set', auto: 'Automatic', inFuture: 'in the future',
@@ -70,24 +68,22 @@ const en: Dict = {
   // settings
   appearance: 'Appearance', language: 'Language', theme: 'Theme', 'theme.auto': 'Auto', 'theme.light': 'Light', 'theme.dark': 'Dark', accent: 'Accent colour',
   reminders: 'Reminders', icsHint: 'Repeating calendar events with alerts at that hour. Works even if notifications do not. Export again after a late completion.', exportIcs: 'Add to calendar (.ics)',
-  data: 'Your data', exportJson: 'Export backup', importJson: 'Import backup', imported: 'Backup imported', privacy: 'Data is kept on this device. Sync is end-to-end encrypted.',
+  data: 'Your data', exportJson: 'Export backup', importJson: 'Import backup', imported: 'Backup imported', privacy: 'Data is kept on this device. Sync is encrypted.',
 };
 
 const uk: Dict = {
+  signedInAs: 'Ви увійшли як {email}', signOut: 'Вийти', shareTitle: 'Поділитися з кимось', shareHint: 'Введіть його пошту Google. Коли він увійде через Google, побачить ті самі рослини.', share: 'Поділитися', shared: 'Надано доступ: {email}',
+  'err.google': 'Не вдалося завантажити вхід Google. Перевірте з’єднання.', 'err.owner': 'Цей сервер належить іншому акаунту Google.',
+  googlePrivacy: 'Ваші рослини шифруються на пристрої. Сервер зберігає ключ запечатаним, щоб ваш акаунт Google міг відкрити їх на будь-якому пристрої.',
   app: 'Plant Care',
   'sync.live': 'Наживо', 'sync.idle': 'Підключено', 'sync.off': 'Офлайн', 'sync.bad': 'Від’єднано',
   'digest.title': '🌿 Для рослин сьогодні: {n}', 'digest.more': '+ ще {n}', 'digest.generic': '🌿 Нагадування про догляд за рослинами',
   you: 'Ви', yourName: 'Ваше ім’я', yourNameHint: 'Показується біля того, що ви відмічаєте', yourNamePlaceholder: 'напр. Іван',
-  household: 'Спільний доступ', householdOn: 'Усе, що ви й партнер відмічаєте, з’являється на обох телефонах за секунду. Дані наскрізно зашифровані: сервер їх не читає.',
-  householdOff: 'Доглядайте за рослинами разом з кимось. Ви обоє бачите зміни одразу.', invitePartner: 'Запросити партнера', syncNow: 'Синхронізувати', leave: 'Вийти', leaveConfirm: 'Припинити синхронізацію на цьому телефоні? Дані залишаться тут.',
-  server: 'Сервер синхронізації', serverHint: 'Адреса вашого Cloudflare Worker (підійде й той, що від Dog Care)', createHousehold: 'Створити спільний доступ', syncedAt: 'синхронізовано {time}', inviteLink: 'Посилання-запрошення', joinHousehold: 'Приєднатися',
-  invited: 'Вас запросили', invitedText: 'Приєднайтесь до спільного доступу, щоб бачити й вести догляд разом. Ваші дані об’єднаються зі спільними.',
-  inviteOnce: 'Посилання діє один раз і спливає за 7 днів. Надсилайте його лише тому, кого хочете запросити. Щоб запросити іншого, створіть нове.', copyLink: 'Копіювати', shareLink: 'Поділитися…', copied: 'Посилання скопійовано', inviteMessage: 'Доглядаймо за рослинами разом',
-  noServerHint: 'Спершу вкажіть адресу сервера синхронізації.', 'err.invite': 'Це посилання-запрошення недійсне.', 'err.used': 'Запрошення вже використане або прострочене. Попросіть нове.', 'err.sync': 'Не вдалося зʼєднатися із сервером синхронізації.',
+  household: 'Синхронізація і спільний доступ', householdOn: 'Той самий акаунт Google відкриває ті самі рослини на будь-якому пристрої. Зміни з’являються за секунду.',
+  householdOff: 'Увійдіть через Google, щоб синхронізувати рослини між пристроями й отримувати нагадування, навіть коли застосунок закритий.', syncNow: 'Синхронізувати', leave: 'Вийти', leaveConfirm: 'Припинити синхронізацію на цьому телефоні? Дані залишаться тут.', syncedAt: 'синхронізовано {time}', 'err.sync': 'Не вдалося зʼєднатися із сервером синхронізації.',
   'err.auth': 'Сервер більше не приймає цей пристрій. Вийдіть і приєднайтесь знову за новим запрошенням.', 'err.denied': 'Сповіщення заблоковані. Дозвольте їх у налаштуваннях браузера чи телефону.', 'err.vapid': 'На сервері ще не налаштовані ключі пуш-сповіщень.', 'err.backup': 'Цей файл — не копія Plant Care.',
   noNotifications: 'Цей браузер не підтримує сповіщення. Скористайтесь експортом у календар нижче.', notifyMe: 'Нагадувати', remindAt: 'Нагадувати о', remindAtHint: 'Місцевий час доби', testReminder: 'Надіслати тестове нагадування',
   iosInstall: 'На iPhone додайте застосунок на Початковий екран (Поділитися → На початковий екран), щоб отримувати нагадування.', localOnly: 'Нагадування приходять, поки застосунок відкритий. Приєднайтесь до спільного доступу, щоб отримувати їх і коли він закритий.',
-  partnerDid: '{by}: {what}',
   'tab.today': 'Сьогодні', 'tab.plants': 'Рослини', 'tab.calendar': 'Календар', 'tab.guide': 'Довідник', 'tab.settings': 'Налаштування',
   undo: 'Скасувати', close: 'Закрити', all: 'Усі', add: 'Додати', save: 'Зберегти', delete: 'Видалити', edit: 'Змінити', name: 'Назва', emoji: 'Емодзі', note: 'Нотатка', date: 'Дата', plant: 'Рослина', search: 'Пошук…',
   today: 'сьогодні', yesterday: 'вчора', ago: '{d} тому', allYear: 'Увесь рік', allPlants: 'Усі рослини', notSet: 'Не вказано', auto: 'Автоматично', inFuture: 'у майбутньому',
@@ -134,7 +130,7 @@ const uk: Dict = {
   'calendar.sub': 'Посадка, ріст і догляд в одному місці', 'cal.done': 'виконано', 'cal.due': 'заплановано', 'cal.empty': 'У цей день нічого немає.', 'cal.planned': 'заплановано',
   appearance: 'Вигляд', language: 'Мова', theme: 'Тема', 'theme.auto': 'Авто', 'theme.light': 'Світла', 'theme.dark': 'Темна', accent: 'Акцентний колір',
   reminders: 'Нагадування', icsHint: 'Календарні події, що повторюються, зі сповіщеннями. Працюють і без сповіщень застосунку. Після запізнілого виконання експортуйте знову.', exportIcs: 'Додати в календар (.ics)',
-  data: 'Ваші дані', exportJson: 'Експорт копії', importJson: 'Імпорт копії', imported: 'Копію імпортовано', privacy: 'Дані зберігаються на цьому пристрої. Синхронізація наскрізно зашифрована.',
+  data: 'Ваші дані', exportJson: 'Експорт копії', importJson: 'Імпорт копії', imported: 'Копію імпортовано', privacy: 'Дані зберігаються на цьому пристрої. Синхронізація зашифрована.',
 };
 
 const DICTS: Record<Lang, Dict> = { en, uk };

@@ -10,12 +10,22 @@
  *   DELETE /v/:id/push              { endpoint }                       unregister
  *   POST   /v/:id/invite            { code, iv, ct }                   store a sealed single-use invite (7 days)
  *   GET    /v/:id/invite/:code      no auth                            -> { iv, ct } once, then 404
+ *
+ * Sign-in with Google, so no device needs an address or an invite:
+ *   POST   /google/open             { idToken }                        -> { path, bearer, key, email } | 404 (nothing linked yet)
+ *   POST   /google/link             { idToken, path, bearer, key }     keep this household for the Google account (needs the household token)
+ *   POST   /google/share            { path, bearer, key, email }       let another Google account open the same household
+ * While linked, the household credentials are kept sealed with a key that lives only in this server's storage.
  */
 import { DurableObject } from 'cloudflare:workers';
+import { verifyGoogleToken } from './google';
 import { sendPush, type PushSub } from './vapid';
 
 export interface Env {
   VAULT: DurableObjectNamespace<Vault>;
+  DIRECTORY: DurableObjectNamespace<Directory>;
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_JWKS_URL?: string;
   ORIGINS?: string;
   VAPID_PUBLIC?: string;
   VAPID_PRIVATE?: string;
@@ -190,6 +200,106 @@ export class Vault extends DurableObject<Env> {
   webSocketClose(ws: WebSocket) { try { ws.close(); } catch { /* already closed */ } }
 }
 
+// ---- Google accounts -------------------------------------------------------------------------------------
+
+interface Creds { path: string; bearer: string; key: string }
+interface Sealed { iv: string; ct: string; email: string }
+
+const b64 = (b: ArrayBuffer | Uint8Array) => btoa(String.fromCharCode(...new Uint8Array(b)));
+const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+
+/**
+ * One object for the whole server: which Google account owns which household. The first account to link becomes the
+ * owner; others can open only a household that was shared with their email. Credentials are sealed with a key kept here.
+ */
+export class Directory extends DurableObject<Env> {
+  private async sealKey(): Promise<CryptoKey> {
+    let raw = await this.ctx.storage.get<string>('sealKey');
+    if (!raw) { raw = b64(crypto.getRandomValues(new Uint8Array(32))); await this.ctx.storage.put('sealKey', raw); }
+    return crypto.subtle.importKey('raw', unb64(raw), 'AES-GCM', false, ['encrypt', 'decrypt']);
+  }
+  private async seal(c: Creds, email: string): Promise<Sealed> {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await this.sealKey(), te.encode(JSON.stringify(c)));
+    return { iv: b64(iv), ct: b64(ct), email };
+  }
+  private async unseal(s: Sealed): Promise<Creds> {
+    return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(s.iv) }, await this.sealKey(), unb64(s.ct)))) as Creds;
+  }
+
+  async fetch(req: Request): Promise<Response> {
+    const op = new URL(req.url).pathname.split('/').pop();
+    const body = (await req.json()) as { sub?: string; email?: string; creds?: Creds; to?: string };
+    const st = this.ctx.storage;
+    const links = (await st.get<Record<string, Sealed>>('links')) ?? {};
+    const pending = (await st.get<Record<string, Sealed>>('pending')) ?? {};
+    const owner = await st.get<string>('owner');
+
+    if (op === 'open') {
+      const { sub, email } = body as { sub: string; email: string };
+      let rec = links[sub];
+      if (!rec && pending[email]) {
+        rec = links[sub] = { ...pending[email], email };
+        delete pending[email];
+        await st.put('links', links);
+        await st.put('pending', pending);
+      }
+      if (rec) return json({ ...(await this.unseal(rec)), email });
+      return owner && owner !== sub ? json({ error: 'This server belongs to another Google account' }, 403) : json({ error: 'nothing linked yet' }, 404);
+    }
+
+    if (op === 'link') {
+      const { sub, email, creds } = body as { sub: string; email: string; creds: Creds };
+      if (owner && owner !== sub) return json({ error: 'This server belongs to another Google account' }, 403);
+      if (!owner) await st.put('owner', sub);
+      links[sub] = await this.seal(creds, email);
+      await st.put('links', links);
+      return json({ ok: true, email });
+    }
+
+    if (op === 'share') {
+      const { creds, to } = body as { creds: Creds; to: string };
+      if (Object.keys(pending).length >= 10 && !pending[to]) return json({ error: 'too many pending shares' }, 403);
+      pending[to] = await this.seal(creds, to);
+      await st.put('pending', pending);
+      return json({ ok: true });
+    }
+    return json({ error: 'not found' }, 404);
+  }
+}
+
+async function google(req: Request, env: Env, op: string): Promise<Response> {
+  let body: { idToken?: string; path?: string; bearer?: string; key?: string; email?: string };
+  try { body = JSON.parse(await req.text()); } catch { return json({ error: 'bad json' }, 400); }
+  const dir = env.DIRECTORY.get(env.DIRECTORY.idFromName('directory'));
+  const call = (path: string, payload: unknown) => dir.fetch(`https://directory/${path}`, { method: 'POST', body: JSON.stringify(payload) });
+
+  const creds: Creds | null =
+    typeof body.path === 'string' && /^\/v\/[0-9a-f]{32}$/.test(body.path) && /^[0-9a-f]{64}$/.test(body.bearer ?? '') && typeof body.key === 'string' && body.key.length < 100
+      ? { path: body.path, bearer: body.bearer!, key: body.key } : null;
+  /** The caller must hold the household's token before the server keeps or hands out a copy of it. */
+  const holds = async (c: Creds) => {
+    const res = await env.VAULT.get(env.VAULT.idFromName(c.path.slice(3))).fetch(new Request('https://vault/', { headers: { 'X-Auth': await sha256(c.bearer) } }));
+    return res.status === 200;
+  };
+
+  if (op === 'share') {
+    const to = (body.email ?? '').trim().toLowerCase();
+    if (!creds || !(await holds(creds))) return json({ error: 'not authorized for this household' }, 401);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to) || to.length > 200) return json({ error: 'bad email' }, 400);
+    return call('share', { creds, to });
+  }
+
+  const who = body.idToken ? await verifyGoogleToken(body.idToken, env) : null;
+  if (!who) return json({ error: 'Google sign-in could not be verified' }, 401);
+  if (op === 'open') return call('open', { sub: who.sub, email: who.email });
+  if (op === 'link') {
+    if (!creds || !(await holds(creds))) return json({ error: 'not authorized for this household' }, 401);
+    return call('link', { sub: who.sub, email: who.email, creds });
+  }
+  return json({ error: 'not found' }, 404);
+}
+
 // ---- router ----------------------------------------------------------------------------------------------
 
 export default {
@@ -206,6 +316,9 @@ export default {
     };
 
     if (url.pathname === '/config') return reply(json({ vapid: env.VAPID_PUBLIC || null }));
+
+    const g = url.pathname.match(/^\/google\/(open|link|share)$/);
+    if (g && req.method === 'POST') return reply(await google(req, env, g[1]));
 
     const m = url.pathname.match(/^\/v\/([0-9a-f]{32})(\/ws|\/push|\/invite|\/invite\/[0-9a-f]{32})?$/);
     if (!m) return reply(json({ error: 'not found' }, 404));

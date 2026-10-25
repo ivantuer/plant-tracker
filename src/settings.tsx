@@ -1,11 +1,13 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { allItems } from './care';
 import { localDate } from './dates';
 import { t } from './i18n';
 import { buildIcs, download } from './ics';
 import { disablePush, enableLocalOnly, enablePush, isIos, pushSupported, scheduleUpload, showDigest, standalone, supported } from './push';
 import { exportJson, importJson, patchSettings, sharedData, state } from './store';
-import { createHousehold, joinHousehold, leaveHousehold, newInviteLink, serverUrl, sync, syncNow, vault } from './sync';
+import { GOOGLE_CLIENT_ID } from './config';
+import { renderGoogleButton } from './google';
+import { connectGoogle, googleEmail, leaveHousehold, shareWith, sync, syncNow, vault } from './sync';
 import type { Lang } from './types';
 import { Field, Seg, Sheet, Topbar, showToast } from './ui';
 
@@ -43,23 +45,28 @@ export function Settings() {
 // ---- shared household ------------------------------------------------------------------------------------
 
 export function Household() {
-  const [busy, setBusy] = useState(false);
-  const [join, setJoin] = useState('');
   const [err, setErr] = useState('');
-  const [invite, setInvite] = useState('');
-  const set = state.value.settings;
+  const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState('');
+  const button = useRef<HTMLDivElement>(null);
   const v = vault.value;
   const st = sync.value;
 
-  const run = async (fn: () => Promise<void>) => {
-    setBusy(true); setErr('');
-    try { await fn(); } catch (e) {
-      const m = (e as Error).message;
-      setErr(m === 'server' ? t('noServerHint') : m === 'invite' ? t('err.invite') : m === 'used' ? t('err.used') : `${t('err.sync')} (${m})`);
-    } finally { setBusy(false); }
-  };
+  // Google's own button signs this device in; the same account then opens the same plants anywhere.
+  useEffect(() => {
+    if (v || !button.current) return;
+    setErr('');
+    renderGoogleButton(button.current, GOOGLE_CLIENT_ID, (idToken) => {
+      setBusy(true);
+      connectGoogle(idToken).catch((e) => setErr((e as Error).message === 'This server belongs to another Google account' ? t('err.owner') : `${t('err.sync')} (${(e as Error).message})`)).finally(() => setBusy(false));
+    }).catch(() => setErr(t('err.google')));
+  }, [v]);
 
   const mode = st.error === 'auth' ? 'bad' : st.error ? 'off' : st.live ? 'live' : 'idle';
+  const share = async () => {
+    setBusy(true); setErr('');
+    try { await shareWith(email.trim()); showToast(t('shared', { email: email.trim() })); setEmail(''); } catch { setErr(t('err.sync')); } finally { setBusy(false); }
+  };
   return (
     <div class="card">
       <h2>{t('household')}</h2>
@@ -69,48 +76,29 @@ export function Household() {
             <span class={`dot ${mode}`}><i />{t(`sync.${mode}`)}</span>
             {st.at > 0 && <span class="muted"> · {t('syncedAt', { time: new Date(st.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}</span>}
           </p>
+          {googleEmail.value && <p class="small">{t('signedInAs', { email: googleEmail.value })}</p>}
           {st.error === 'auth' && <p class="error small">{t('err.auth')}</p>}
           <p class="muted small">{t('householdOn')}</p>
+          <Field label={t('shareTitle')} hint={t('shareHint')}>
+            <div class="row gap">
+              <input type="email" value={email} placeholder="name@gmail.com" onInput={(e) => setEmail((e.target as HTMLInputElement).value)} />
+              <button class="btn" disabled={busy || !/^\S+@\S+\.\S+$/.test(email.trim())} onClick={() => void share()}>{t('share')}</button>
+            </div>
+          </Field>
           <div class="row gap wrap">
-            <button class="btn primary" disabled={busy} onClick={() => void run(async () => setInvite(await newInviteLink()))}>{t('invitePartner')}</button>
             <button class="btn" disabled={st.busy} onClick={() => void syncNow()}>{t('syncNow')}</button>
-            <button class="btn danger" onClick={() => confirm(t('leaveConfirm')) && void leaveHousehold()}>{t('leave')}</button>
+            <button class="btn danger" onClick={() => confirm(t('leaveConfirm')) && void leaveHousehold()}>{t('signOut')}</button>
           </div>
         </>
       ) : (
         <>
           <p class="muted small">{t('householdOff')}</p>
-          <Field label={t('server')} hint={t('serverHint')}>
-            <input type="url" value={set.server} placeholder={serverUrl() || 'https://plantcare-sync.you.workers.dev'} onInput={(e) => patchSettings({ server: (e.target as HTMLInputElement).value })} />
-          </Field>
-          <button class="btn primary block" disabled={busy || !serverUrl()} onClick={() => void run(createHousehold)}>{t('createHousehold')}</button>
-          <Field label={t('inviteLink')}><input type="text" value={join} placeholder="https://…#join=…" onInput={(e) => setJoin((e.target as HTMLInputElement).value)} /></Field>
-          <button class="btn block" disabled={busy || !join.trim()} onClick={() => void run(() => joinHousehold(join))}>{t('joinHousehold')}</button>
+          <div ref={button} style={{ minHeight: '44px' }} />
+          <p class="hint">{t('googlePrivacy')}</p>
         </>
       )}
       {err && <p class="error small">{err}</p>}
-      {invite && <LinkSheet link={invite} onClose={() => setInvite('')} />}
     </div>
-  );
-}
-
-const mobile = () => /Mobi|iPhone|iPad|Android/i.test(navigator.userAgent);
-
-/** The one-time link, ready to copy. The system share sheet is offered only on phones, where it reaches Messages and mail apps. */
-function LinkSheet({ link, onClose }: { link: string; onClose: () => void }) {
-  const copy = async () => {
-    try { await navigator.clipboard.writeText(link); showToast(t('copied')); } catch { prompt(t('inviteLink'), link); }
-  };
-  const share = () => void navigator.share({ title: t('app'), text: t('inviteMessage'), url: link }).catch(() => {});
-  return (
-    <Sheet title={t('invitePartner')} onClose={onClose}>
-      <p class="muted small">{t('inviteOnce')}</p>
-      <input type="text" readOnly value={link} onFocus={(e) => (e.target as HTMLInputElement).select()} />
-      <div class="row gap">
-        <button class="btn primary grow" onClick={copy}>{t('copyLink')}</button>
-        {mobile() && 'share' in navigator && <button class="btn" onClick={share}>{t('shareLink')}</button>}
-      </div>
-    </Sheet>
   );
 }
 

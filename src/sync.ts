@@ -1,22 +1,23 @@
 import { signal } from '@preact/signals';
 import { del, get, set } from 'idb-keyval';
 import { DEFAULT_SERVER } from './config';
-import { applySynced, hooks, sharedData, state } from './store';
-import { canon, createInvite, liveProtocols, liveUrl, mergeData, newVault, redeemInvite, syncOnce, SyncAuthError, type Vault } from './sync-core';
+import { applySynced, hooks, patchSettings, sharedData, state } from './store';
+import { canon, liveProtocols, liveUrl, mergeData, newVault, syncOnce, SyncAuthError, type Vault } from './sync-core';
 import type { Log } from './types';
 
 const VAULT_KEY = 'plant-care-vault';
+const EMAIL_KEY = 'plant-care-google';
 
 export const vault = signal<Vault | null>(null);
 export const sync = signal({ live: false, busy: false, error: '', at: 0 });
-/** An invite link opened on this device, waiting for the person to confirm joining. */
-export const pendingInvite = signal('');
+/** The Google account this device signed in with. */
+export const googleEmail = signal('');
 /** Called with entries that the other person added, so the UI can say so. */
 export const partner = { onLogs: (_logs: Log[]) => {} };
 /** Called after each sync so other parts (push schedule) can follow the data. */
 export const afterSync = { run: () => {} };
 
-export const serverUrl = () => (state.value.settings.server.trim() || DEFAULT_SERVER).replace(/\/+$/, '');
+export const serverUrl = () => DEFAULT_SERVER.replace(/\/+$/, '');
 
 let rev = 0;
 let ws: WebSocket | null = null;
@@ -110,34 +111,60 @@ async function setVault(v: Vault | null) {
   else closeLive();
 }
 
-export async function createHousehold() {
-  const url = serverUrl();
-  if (!url) throw new Error('server');
-  await setVault(newVault(url));
-  await syncNow();
+const postJson = async <T>(path: string, body: unknown): Promise<T> => {
+  const res = await fetch(`${serverUrl()}${path}`, { method: 'POST', body: JSON.stringify(body) });
+  const j = (await res.json().catch(() => ({}))) as T & { error?: string };
+  if (!res.ok) throw Object.assign(new Error(j.error ?? `Sync server error ${res.status}`), { status: res.status });
+  return j;
+};
+
+/** The person's first name from a Google ID token (only for display, so it is not verified here). */
+function nameFrom(idToken: string): string {
+  try {
+    const p = JSON.parse(decodeURIComponent(escape(atob(idToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))) as { given_name?: string; name?: string };
+    return p.given_name ?? p.name ?? '';
+  } catch { return ''; }
+}
+
+/**
+ * Signs in with Google. If this account already has a household (on another device, or shared with it), this device
+ * opens it; otherwise a new household is created and linked to the account. Either way there is nothing to type.
+ */
+export async function connectGoogle(idToken: string) {
+  let email = '';
+  let v: Vault;
+  try {
+    const r = await postJson<{ path: string; bearer: string; key: string; email: string }>('/google/open', { idToken });
+    v = { url: serverUrl(), path: r.path, bearer: r.bearer, key: r.key };
+    email = r.email;
+    await setVault(v);
+    await syncNow();
+  } catch (e) {
+    if ((e as { status?: number }).status !== 404) throw e;
+    v = newVault(serverUrl());
+    await setVault(v);
+    await syncNow();
+    if (sync.value.error) { const msg = sync.value.error; await setVault(null); patch({ error: '' }); throw new Error(msg); }
+    try {
+      email = (await postJson<{ email: string }>('/google/link', { idToken, path: v.path, bearer: v.bearer, key: v.key })).email;
+    } catch (err) { await setVault(null); throw err; }
+  }
   if (sync.value.error) { const msg = sync.value.error; await setVault(null); patch({ error: '' }); throw new Error(msg); }
+  googleEmail.value = email;
+  await set(EMAIL_KEY, email);
+  if (!state.value.settings.me.trim()) patchSettings({ me: nameFrom(idToken) });
 }
 
-export async function joinHousehold(text: string) {
-  await setVault(await redeemInvite(text));
-  await syncNow();
-  if (sync.value.error) { const msg = sync.value.error; await setVault(null); patch({ error: '' }); throw new Error(msg); }
+/** Lets another Google account open this household by signing in with that email. */
+export async function shareWith(email: string) {
+  const v = vault.value;
+  if (!v) throw new Error('household');
+  await postJson('/google/share', { path: v.path, bearer: v.bearer, key: v.key, email });
 }
 
-export const leaveHousehold = () => setVault(null);
-
-/** A fresh single-use invite link for the other person. */
-export async function newInviteLink(): Promise<string> {
-  if (!vault.value) throw new Error('household');
-  return `${location.origin}${location.pathname}#join=${await createInvite(vault.value)}`;
-}
+export const leaveHousehold = async () => { await setVault(null); googleEmail.value = ''; await del(EMAIL_KEY); };
 
 export function startSync() {
-  const hash = location.hash;
-  if (hash.startsWith('#join=')) {
-    pendingInvite.value = hash;
-    history.replaceState(null, '', location.pathname + location.search);
-  }
   hooks.dataChanged = () => {
     if (!vault.value) { afterSync.run(); return; }
     clearTimeout(debounce);
@@ -151,6 +178,7 @@ export function startSync() {
   window.addEventListener('online', () => vault.value && (openLive(), void syncNow()));
   // Polling is the safety net behind the live socket (and the only path if sockets are blocked).
   setInterval(() => document.visibilityState === 'visible' && vault.value && !sync.value.live && void syncNow(), 60_000);
+  void get<string>(EMAIL_KEY).then((e) => e && (googleEmail.value = e));
   void get<Vault>(VAULT_KEY).then((v) => {
     if (v) { vault.value = v; openLive(); void syncNow(); }
   });

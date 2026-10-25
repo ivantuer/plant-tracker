@@ -15,6 +15,10 @@ Allowed sites: edit `ORIGINS` in `wrangler.toml` to the address where the app is
 
 Then put the Worker address in `src/config.ts` (`DEFAULT_SERVER`) and push. Or type it into Settings on each phone.
 
+## Sign in with Google
+
+`GOOGLE_CLIENT_ID` in `wrangler.toml` is a public OAuth client ID (the same as Savings Tracker's: Google only checks the site, `https://ivantuer.github.io`, not the path). A `Directory` Durable Object maps Google accounts to households; the first account to link becomes the owner, and others can open a household only after it is shared with their email. Endpoints: `POST /google/open`, `/google/link`, `/google/share`.
+
 ## Push reminders (once)
 
 ```bash

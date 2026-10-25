@@ -8,11 +8,22 @@ compatibility_date = "2025-09-01"
 name = "VAULT"
 class_name = "Vault"
 
+[[durable_objects.bindings]]
+name = "DIRECTORY"
+class_name = "Directory"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Vault"]
 
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Directory"]
+
 [vars]
+# OAuth client ID from Google Cloud (public, not a secret). Tokens issued for any other client are refused.
+# It is the same one Savings Tracker uses: Google only checks the site (https://ivantuer.github.io), not the path.
+GOOGLE_CLIENT_ID = "48421767098-s12lbcksebhdo5hiano0u26edjugif7k.apps.googleusercontent.com"
 # Comma-separated list of sites allowed to call this server (localhost is always allowed).
 ORIGINS = "https://ivantuer.github.io"
 # Public push key printed by `npm run vapid` in the app folder. The private half is a secret (see README).
