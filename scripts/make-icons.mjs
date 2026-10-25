@@ -25,7 +25,7 @@ const chunk = (type, data) => {
 const PAW = [[256, 330, 26, 120], [170, 215, 62, 110, -38], [342, 215, 62, 110, 38]];
 const BG = [0x3f, 0xae, 0x6a];
 
-function png(size) {
+function png(size, scale = 1) {
   const k = 512 / size;
   const raw = Buffer.alloc((size * 4 + 1) * size);
   for (let y = 0; y < size; y++) {
@@ -33,7 +33,7 @@ function png(size) {
     for (let x = 0; x < size; x++) {
       let hit = 0;
       for (let sy = 0; sy < 2; sy++) for (let sx = 0; sx < 2; sx++) {
-        const px = (x + (sx + 0.5) / 2) * k, py = (y + (sy + 0.5) / 2) * k;
+        const px = 256 + ((x + (sx + 0.5) / 2) * k - 256) / scale, py = 256 + ((y + (sy + 0.5) / 2) * k - 256) / scale;
         if (PAW.some(([cx, cy, rx, ry, deg = 0]) => {
           const a = (-deg * Math.PI) / 180, dx = px - cx, dy = py - cy;
           const u = dx * Math.cos(a) - dy * Math.sin(a), v = dx * Math.sin(a) + dy * Math.cos(a);
@@ -55,3 +55,5 @@ function png(size) {
 writeFileSync('public/icon-192.png', png(192));
 writeFileSync('public/icon-512.png', png(512));
 writeFileSync('public/apple-touch-icon.png', png(180));
+// Maskable: Android crops this to a circle or squircle, so the leaf stays inside the central 60%.
+writeFileSync('public/icon-maskable-512.png', png(512, 0.6));
