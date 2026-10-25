@@ -126,7 +126,7 @@ textarea { resize: vertical; }
 @keyframes pop { from { opacity: 0; transform: translate(-50%, 10px); } }
 
 /* empty, presets, onboarding */
-.empty { text-align: center; padding: 40px 10px; display: grid; gap: 8px; justify-items: center; } .empty-emoji { font-size: 48px; }
+.empty { text-align: center; padding: 40px 10px; min-height: 60vh; display: grid; gap: 8px; justify-items: center; align-content: center; } .empty-emoji { font-size: 48px; }
 .presets { display: grid; gap: 8px; } .preset { display: flex; align-items: center; gap: 12px; text-align: left; border: 1px solid var(--ring); background: var(--field); border-radius: 16px; padding: 10px 12px; } .preset span { display: grid; }
 .onboard { display: grid; gap: 12px; padding-bottom: 20px; } .onboard .item, .onboard .field, .onboard .chips { margin-bottom: 0; }
 .hello { font-size: 54px; }
