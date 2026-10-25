@@ -1,0 +1,21 @@
+name = "plantcare-sync"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+
+# One Durable Object per household: it stores the encrypted blob, tells connected phones when it changes
+# (WebSocket) and wakes sleeping phones with a push at the reminder times.
+[[durable_objects.bindings]]
+name = "VAULT"
+class_name = "Vault"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Vault"]
+
+[vars]
+# Comma-separated list of sites allowed to call this server (localhost is always allowed).
+ORIGINS = "https://ivantuer.github.io"
+# Public push key printed by `npm run vapid` in the app folder. The private half is a secret (see README).
+VAPID_PUBLIC = "BIkVRZ2s7GgcJ1oghgSNzb6s8MtGZmKfpoSZA6IPV4yrdicdgrmzVF-0sWnumP6C20qyHZGoNhKTaWLyT4V2ixU"
+# A contact the push services can reach if your server misbehaves. Replace with your own address.
+VAPID_SUBJECT = "mailto:you@example.com"
