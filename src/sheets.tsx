@@ -11,7 +11,7 @@ import { PlantSearch } from './search';
 import { fromHit } from './pick';
 import type { Hit } from './taxa';
 import type { Milestone, Plant, Task, Unit } from './types';
-import { Avatar, Chip, Field, Seg, Sheet, showToast } from './ui';
+import { Chip, Field, Seg, Sheet, showToast } from './ui';
 import { lang } from './i18n';
 
 // ---- one-tap done, with details --------------------------------------------------------------------------

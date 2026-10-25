@@ -20,6 +20,16 @@ describe('merge', () => {
     expect(mergeData(b, gone).plants.map((p) => p.id)).toEqual(['p1', 'p2']);
   });
 
+  it('merges photo records and drops them with their plant', () => {
+    const ph = (id: string, plantId: string) => ({ id, plantId, thumbId: id + 't', day: '2026-05-01', updatedAt: later });
+    const x = data({ plants: [plant('p1')], photos: [ph('a', 'p1')] });
+    const y = data({ plants: [plant('p1'), plant('p2')], photos: [ph('b', 'p2')] });
+    expect(mergeData(x, y).photos.map((p) => p.id).sort()).toEqual(['a', 'b']);
+    expect(canon(mergeData(x, y))).toBe(canon(mergeData(y, x)));
+    expect(mergeData(x, data({ tombstones: { a: '2026-07-01T00:00:00.000Z' } })).photos).toEqual([]);
+    expect(mergeData(y, data({ tombstones: { p2: '2026-07-01T00:00:00.000Z' } })).photos).toEqual([]);
+  });
+
   it('removing a plant drops its history and routines kept only for it', () => {
     const d = data({
       plants: [plant('p2')],

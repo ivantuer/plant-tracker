@@ -15,6 +15,8 @@ export interface Plant {
   taxonId?: number;
   /** Cultivar / variety (сорт), free text, e.g. "Thai Constellation". */
   variety?: string;
+  /** Photo shown on the card; the newest one when empty. */
+  cover?: string;
   emoji: string;
   color: string;
   /** Room or windowsill. */
@@ -27,6 +29,20 @@ export interface Plant {
 }
 
 /** Sprouted, budded, bloomed, harvested... A plant can have many (blooms come back every year). */
+/**
+ * A photo of a plant. The pictures themselves are not in the synced data: the full-size one (`id`) and the thumbnail
+ * (`thumbId`) live on the phone and, encrypted, in R2.
+ */
+export interface Photo {
+  id: string;
+  plantId: string;
+  thumbId: string;
+  /** When it was taken, YYYY-MM-DD. */
+  day: string;
+  note?: string;
+  updatedAt: string;
+}
+
 export interface Milestone {
   id: string;
   plantId: string;
@@ -101,6 +117,7 @@ export interface AppState {
   version: 1;
   plants: Plant[];
   milestones: Milestone[];
+  photos: Photo[];
   tasks: Task[];
   logs: Log[];
   tombstones: Record<string, string>;
@@ -110,6 +127,7 @@ export interface AppState {
 export interface SyncData {
   plants: Plant[];
   milestones: Milestone[];
+  photos: Photo[];
   tasks: Task[];
   logs: Log[];
   tombstones: Record<string, string>;

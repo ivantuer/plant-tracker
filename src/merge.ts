@@ -25,6 +25,7 @@ export function prune(d: SyncData): SyncData {
     ...d,
     tasks: tasks.map((t) => (t.plantIds.length && t.plantIds.some((id) => !plants.has(id)) ? { ...t, plantIds: t.plantIds.filter((id) => plants.has(id)) } : t)),
     milestones: d.milestones.filter((m) => plants.has(m.plantId)),
+    photos: (d.photos ?? []).filter((p) => plants.has(p.plantId)),
     logs: d.logs.filter((l) => plants.has(l.plantId) && ids.has(l.taskId)),
   };
 }
@@ -37,6 +38,7 @@ export function mergeData(a: SyncData, b: SyncData): SyncData {
   return prune({
     plants: byId(a.plants, b.plants).filter(alive),
     milestones: byId(a.milestones, b.milestones).filter(alive),
+    photos: byId(a.photos ?? [], b.photos ?? []).filter(alive),
     tasks: byId(a.tasks, b.tasks).filter(alive),
     logs: byId(a.logs, b.logs).filter(alive),
     tombstones,
@@ -46,5 +48,5 @@ export function mergeData(a: SyncData, b: SyncData): SyncData {
 /** Stable form for comparing two datasets regardless of ordering. */
 export function canon(d: SyncData): string {
   const sortBy = <T extends { id: string }>(xs: T[]) => [...xs].sort((p, q) => p.id.localeCompare(q.id));
-  return JSON.stringify({ p: sortBy(d.plants), m: sortBy(d.milestones), t: sortBy(d.tasks), l: sortBy(d.logs), x: Object.entries(d.tombstones).sort() });
+  return JSON.stringify({ p: sortBy(d.plants), m: sortBy(d.milestones), f: sortBy(d.photos ?? []), t: sortBy(d.tasks), l: sortBy(d.logs), x: Object.entries(d.tombstones).sort() });
 }

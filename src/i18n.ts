@@ -5,6 +5,8 @@ import type { Lang } from './types';
 type Dict = Record<string, string>;
 
 const en: Dict = {
+  photos: 'Photos', addPhoto: 'Photo', noPhotos: 'No photos yet. Add one to follow how the plant grows.', saving: 'Saving…', cover: 'Cover', makeCover: 'Make cover', coverSet: 'Cover photo set', deletePhotoConfirm: 'Delete this photo?', photoNotePlaceholder: 'e.g. new leaf',
+  photoUnavailable: 'This photo is not available yet. It opens once the phone that took it has uploaded it.', photoLoading: 'Loading the full photo…', 'err.photo': 'Could not read that image.',
   findPlant: 'Find a plant', findPlantHint: 'Type a name in any language, e.g. monstera, фікус, Ficus benjamina', findPlantPlaceholder: 'Search any plant…', variety: 'Variety (cultivar)', varietyPlaceholder: 'e.g. Thai Constellation',
   inGuide: 'In the guide with typical care', 'rank.genus': 'genus', 'rank.family': 'family', searching: 'Searching…', searchOffline: 'Search needs an internet connection.', noResults: 'No plants found.', searchCredit: 'Search: iNaturalist',
   searchAnyPlant: 'Search any plant…', searchAnyHint: 'Searches the whole plant kingdom online as you type. Plants from our guide come with typical care.', guideTitle: 'Plants with typical care', noCareInfo: 'No typical care for this plant yet: add watering and other routines yourself in the Routines tab.',
@@ -78,6 +80,8 @@ const en: Dict = {
 };
 
 const uk: Dict = {
+  photos: 'Фото', addPhoto: 'Фото', noPhotos: 'Фото ще немає. Додайте, щоб стежити, як росте рослина.', saving: 'Зберігаю…', cover: 'Обкладинка', makeCover: 'Зробити обкладинкою', coverSet: 'Обкладинку встановлено', deletePhotoConfirm: 'Видалити це фото?', photoNotePlaceholder: 'напр. новий листок',
+  photoUnavailable: 'Це фото ще недоступне. Воно відкриється, коли телефон, що його зробив, завантажить його.', photoLoading: 'Завантажую повне фото…', 'err.photo': 'Не вдалося прочитати зображення.',
   findPlant: 'Знайти рослину', findPlantHint: 'Назва будь-якою мовою: монстера, ficus, Ficus benjamina', findPlantPlaceholder: 'Пошук будь-якої рослини…', variety: 'Сорт', varietyPlaceholder: 'напр. Thai Constellation',
   inGuide: 'У довіднику з типовим доглядом', 'rank.genus': 'рід', 'rank.family': 'родина', searching: 'Шукаю…', searchOffline: 'Для пошуку потрібен інтернет.', noResults: 'Нічого не знайдено.', searchCredit: 'Пошук: iNaturalist',
   searchAnyPlant: 'Пошук будь-якої рослини…', searchAnyHint: 'Шукає по всьому рослинному світу онлайн, поки ви друкуєте. Рослини з нашого довідника мають типовий догляд.', guideTitle: 'Рослини з типовим доглядом', noCareInfo: 'Для цієї рослини ще немає типового догляду: додайте полив та інші процедури самі у вкладці «Розклад».',

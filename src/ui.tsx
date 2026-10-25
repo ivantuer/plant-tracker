@@ -54,8 +54,8 @@ export const Badge = ({ emoji, color, size = 44 }: { emoji: string; color: strin
   <span class="badge" style={{ width: `${size}px`, height: `${size}px`, fontSize: `${size * 0.52}px`, background: `color-mix(in srgb, ${color} 30%, transparent)`, color }}>{emoji}</span>
 );
 
-export const Avatar = ({ plant, size = 36 }: { plant: { emoji: string; color: string }; size?: number }) => (
-  <span class="avatar" style={{ width: `${size}px`, height: `${size}px`, fontSize: `${size * 0.55}px`, background: `color-mix(in srgb, ${plant.color} 28%, transparent)`, borderColor: plant.color }}>{plant.emoji}</span>
+export const Avatar = ({ plant, size = 36, children }: { plant: { emoji: string; color: string }; size?: number; children?: ComponentChildren }) => (
+  <span class="avatar" style={{ width: `${size}px`, height: `${size}px`, fontSize: `${size * 0.55}px`, background: `color-mix(in srgb, ${plant.color} 28%, transparent)`, borderColor: plant.color }}>{children ?? plant.emoji}</span>
 );
 
 export function Chip({ on, onClick, children, color }: { on: boolean; onClick: () => void; children: ComponentChildren; color?: string }) {

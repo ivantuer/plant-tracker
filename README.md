@@ -4,6 +4,7 @@ Local-first PWA for tracking houseplants. Same stack and architecture as Dog Car
 
 - **Today**: what is overdue, due today and coming up (next 30 days). One tap on ✓ logs it (with Undo); tap the card to backdate, add a note, set the next date by hand, or skip.
 - **Find any plant**: one combobox with autocomplete (arrow keys, Enter) searches our guide first and then the whole plant kingdom online via iNaturalist, in Ukrainian, English or Latin, as you type. Nothing is stored locally except the chosen scientific name. Plants from the guide get typical care; any other plant works too. Each plant also has a variety (сорт) field.
+- **Photos**: add several photos per plant (a gallery by date, with notes), pick a cover; the cover or newest photo becomes the plant's round picture. Photos are shrunk on the phone, kept locally and, once you are signed in, uploaded encrypted to Cloudflare R2, so they open on your other devices too.
 - **Plants**: cards with species, place, age and next care; the detail sheet has the growth timeline (planted → sprouted → buds → bloom → bloom ended → harvest, repeatable every year), the plant's routines and typical care for the species.
 - **Calendar**: month grid with planting dates, milestones, care done and care still planned. Add a planting date or a milestone to any day.
 - **Guide**: 26 common Ukrainian houseplants with typical care (light, watering for summer/winter, feeding, humidity, temperature, repotting, bloom months, pet toxicity); 8 pests and diseases with signs, steps, products and course length; a month-by-month plan.

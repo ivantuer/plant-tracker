@@ -8,4 +8,4 @@ export const task = (id: string, over: Partial<Task> = {}): Task => ({
 
 export const log = (id: string, taskId: string, plantId: string, at: string, over: Partial<Log> = {}): Log => ({ id, taskId, plantId, at, updatedAt: at, ...over });
 
-export const data = (over: Partial<SyncData> = {}): SyncData => ({ plants: [], milestones: [], tasks: [], logs: [], tombstones: {}, ...over });
+export const data = (over: Partial<SyncData> = {}): SyncData => ({ plants: [], milestones: [], photos: [], tasks: [], logs: [], tombstones: {}, ...over });

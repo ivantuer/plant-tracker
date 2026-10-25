@@ -19,6 +19,10 @@ Then put the Worker address in `src/config.ts` (`DEFAULT_SERVER`) and push. Or t
 
 `GOOGLE_CLIENT_ID` in `wrangler.toml` is a public OAuth client ID (the same as Savings Tracker's: Google only checks the site, `https://ivantuer.github.io`, not the path). A `Directory` Durable Object maps Google accounts to households; the first account to link becomes the owner, and others can open a household only after it is shared with their email. Endpoints: `POST /google/open`, `/google/link`, `/google/share`.
 
+## Photos (R2)
+
+`wrangler.toml` binds an R2 bucket `PHOTOS` (`plantcare-photos`; create it once with `npx wrangler r2 bucket create plantcare-photos`). Photos are encrypted with the household key on the phone before upload, so the bucket holds only ciphertext. Limits: 3 MB per file, 600 files (300 photos, each a full size and a thumbnail) per household. `PUT/GET/DELETE /v/:id/photo/:pid`, same token as the rest of the household.
+
 ## Push reminders (once)
 
 ```bash

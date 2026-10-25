@@ -85,3 +85,15 @@ describe('reminders', () => {
     expect(digest(data(), 'en')).toBeNull();
   });
 });
+
+describe('photos', () => {
+  it('uses the chosen cover, else the newest photo', async () => {
+    const { coverOf } = await import('../src/photofiles');
+    const ph = (id: string, plantId: string, day: string) => ({ id, plantId, thumbId: id + 't', day, updatedAt: day });
+    const photos = [ph('a', 'p', '2026-03-01'), ph('b', 'p', '2026-05-01'), ph('c', 'q', '2026-06-01')];
+    expect(coverOf({ id: 'p' }, photos)?.id).toBe('b');
+    expect(coverOf({ id: 'p', cover: 'a' }, photos)?.id).toBe('a');
+    expect(coverOf({ id: 'p', cover: 'gone' }, photos)?.id).toBe('b');
+    expect(coverOf({ id: 'z' }, photos)).toBeUndefined();
+  });
+});

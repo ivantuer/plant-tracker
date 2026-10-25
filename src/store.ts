@@ -1,6 +1,6 @@
 import { effect, signal } from '@preact/signals';
 import { get, set } from 'idb-keyval';
-import type { AppState, Lang, Log, Milestone, MilestoneKind, Plant, SyncData, Task } from './types';
+import type { AppState, Lang, Log, Milestone, MilestoneKind, Photo, Plant, SyncData, Task } from './types';
 import { draftFromPreset, careFor, presetByKey, PEST_PLAN, type TaskDraft } from './presets';
 import { mergeData, prune } from './merge';
 import { addInterval, localDate, stampFor } from './dates';
@@ -15,6 +15,7 @@ export const defaults = (): AppState => ({
   version: 1,
   plants: [],
   milestones: [],
+  photos: [],
   tasks: [],
   logs: [],
   tombstones: {},
@@ -41,8 +42,8 @@ export async function init() {
 }
 
 export const sharedData = (): SyncData => {
-  const { plants, milestones, tasks, logs, tombstones } = state.value;
-  return { plants, milestones, tasks, logs, tombstones };
+  const { plants, milestones, photos, tasks, logs, tombstones } = state.value;
+  return { plants, milestones, photos, tasks, logs, tombstones };
 };
 
 /** Writes shared data and tells the sync engine; the single place where records change. */
@@ -155,6 +156,21 @@ export function removeMilestone(id: string) {
 
 export const addMilestone = (plantId: string, kind: MilestoneKind, day: string, note?: string) => saveMilestone({ id: uid(), plantId, kind, day, ...(note ? { note } : {}) });
 
+// ---- photos ----------------------------------------------------------------------------------------------
+
+export function savePhoto(p: Omit<Photo, 'updatedAt'>) {
+  commit((s) => ({ ...s, photos: [...s.photos.filter((x) => x.id !== p.id), { ...p, updatedAt: now() }] }));
+}
+
+export function removePhoto(id: string) {
+  commit((s) => ({
+    ...s,
+    photos: s.photos.filter((x) => x.id !== id),
+    plants: s.plants.map((p) => (p.cover === id ? { ...p, cover: undefined, updatedAt: now() } : p)),
+    tombstones: { ...s.tombstones, [id]: now() },
+  }));
+}
+
 // ---- backup ----------------------------------------------------------------------------------------------
 
 export const exportJson = () => JSON.stringify({ app: 'plant-care-tracker', ...sharedData() }, null, 2);
@@ -163,6 +179,6 @@ export const exportJson = () => JSON.stringify({ app: 'plant-care-tracker', ...s
 export function importJson(text: string) {
   const j = JSON.parse(text) as Partial<SyncData> & { app?: string };
   if (j.app !== 'plant-care-tracker') throw new Error('not a backup');
-  const incoming: SyncData = { plants: j.plants ?? [], milestones: j.milestones ?? [], tasks: j.tasks ?? [], logs: j.logs ?? [], tombstones: j.tombstones ?? {} };
+  const incoming: SyncData = { plants: j.plants ?? [], milestones: j.milestones ?? [], photos: j.photos ?? [], tasks: j.tasks ?? [], logs: j.logs ?? [], tombstones: j.tombstones ?? {} };
   commit((s) => mergeData(s, incoming));
 }

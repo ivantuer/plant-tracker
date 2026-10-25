@@ -9,7 +9,8 @@ import { blankPlant, blankTask, EventSheet, LogSheet, PlantForm, TaskSheet } fro
 import { SPECIES, speciesByKey, type Species } from './species';
 import { addPreset, addSpeciesCare, hasSpeciesCare, state } from './store';
 import type { Milestone, Plant, Task } from './types';
-import { Avatar, Badge, Empty, Field, Seg, Sheet, Topbar } from './ui';
+import { Badge, Empty, Field, Seg, Sheet, Topbar } from './ui';
+import { PlantAvatar, PlantPhotos } from './photos';
 
 type View = 'plants' | 'routines';
 
@@ -44,7 +45,7 @@ function PlantCard({ p, onOpen }: { p: Plant; onOpen: () => void }) {
   const last = s.milestones.filter((m) => m.plantId === p.id).sort((a, b) => b.day.localeCompare(a.day))[0];
   return (
     <button class="plant-card" onClick={onOpen}>
-      <Avatar plant={p} size={52} />
+      <PlantAvatar plant={p} size={52} />
       <b>{p.name}</b>
       <span class="small muted">{[sp?.name[lang.value] ?? p.latin, p.variety, p.place].filter(Boolean).join(' · ') || ' '}</span>
       {p.plantedOn && <span class="small">🪴 {ageText(p.plantedOn)}</span>}
@@ -95,10 +96,12 @@ function PlantSheet({ id, onClose }: { id: string; onClose: () => void }) {
   return (
     <Sheet title={`${p.emoji} ${p.name}`} onClose={onClose}>
       <div class="row gap">
-        <Avatar plant={p} size={52} />
+        <PlantAvatar plant={p} size={52} />
         <div class="grow"><b>{sp?.name[lang.value] ?? p.latin ?? t('otherPlant')}</b>{p.variety && <div class="small">{t('variety')}: {p.variety}</div>}<div class="small muted">{[p.latin && sp ? p.latin : '', p.place, p.origin && t(`origin.${p.origin}`)].filter(Boolean).join(' · ')}</div></div>
         <button class="btn small-btn" onClick={() => setEdit(true)}>{t('edit')}</button>
       </div>
+
+      <PlantPhotos plant={p} />
 
       <div class="card">
         <div class="row between"><h2>{t('timeline')}</h2><button class="btn small-btn" onClick={() => setEvent({})}>+ {t('add')}</button></div>

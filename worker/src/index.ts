@@ -9,6 +9,7 @@
  *   POST   /v/:id/push              { sub, times }                     register a phone and the moments to wake it
  *   DELETE /v/:id/push              { endpoint }                       unregister
  *   POST   /v/:id/invite            { code, iv, ct }                   store a sealed single-use invite (7 days)
+ *   PUT/GET/DELETE /v/:id/photo/:pid  encrypted photo bytes (R2), up to 3 MB each, 600 files per household
  *   GET    /v/:id/invite/:code      no auth                            -> { iv, ct } once, then 404
  *
  * Sign-in with Google, so no device needs an address or an invite:
@@ -23,6 +24,7 @@ import { sendPush, type PushSub } from './vapid';
 
 export interface Env {
   VAULT: DurableObjectNamespace<Vault>;
+  PHOTOS: R2Bucket;
   DIRECTORY: DurableObjectNamespace<Directory>;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_JWKS_URL?: string;
@@ -33,6 +35,9 @@ export interface Env {
 }
 
 const MAX_BODY = 1_000_000;
+const MAX_PHOTO = 3_000_000;
+/** Each photo is two files (full size and a thumbnail). */
+const MAX_PHOTOS = 600;
 const MAX_SUBS = 8;
 const MAX_INVITES = 5;
 const INVITE_TTL = 7 * 86_400_000;
@@ -107,6 +112,9 @@ export class Vault extends DurableObject<Env> {
       return new Response(null, { status: 101, webSocket: pair[0], headers: proto ? { 'Sec-WebSocket-Protocol': proto } : {} });
     }
 
+    const photo = url.pathname.match(/^\/v\/([0-9a-f]{32})\/photo\/([0-9a-f]{32})$/);
+    if (photo) return this.photo(req, rec, `${photo[1]}/${photo[2]}`);
+
     if (url.pathname.endsWith('/push')) return this.push(req, rec);
     if (url.pathname.endsWith('/invite') && req.method === 'POST') return this.invite(req, rec);
 
@@ -146,6 +154,31 @@ export class Vault extends DurableObject<Env> {
     invites[body.code] = { iv: body.iv, ct: body.ct, exp: now + INVITE_TTL };
     await this.ctx.storage.put('invites', invites);
     return json({ ok: true });
+  }
+
+  /** Encrypted photo bytes in R2, under this household's prefix. The server cannot read them. */
+  private async photo(req: Request, rec: Rec | undefined, key: string): Promise<Response> {
+    if (!rec) return json({ error: 'empty' }, 404);
+    if (req.method === 'GET') {
+      const obj = await this.env.PHOTOS.get(key);
+      if (!obj) return json({ error: 'not found' }, 404);
+      return new Response(obj.body, { headers: { 'Content-Type': 'application/octet-stream', 'Cache-Control': 'private, max-age=31536000, immutable' } });
+    }
+    if (req.method === 'DELETE') {
+      await this.env.PHOTOS.delete(key);
+      return json({ ok: true });
+    }
+    if (req.method === 'PUT') {
+      if (Number(req.headers.get('Content-Length') ?? '0') > MAX_PHOTO) return json({ error: 'too large' }, 413);
+      const bytes = await req.arrayBuffer();
+      if (bytes.byteLength > MAX_PHOTO) return json({ error: 'too large' }, 413);
+      if (bytes.byteLength < 28) return json({ error: 'bad body' }, 400);
+      const mine = await this.env.PHOTOS.list({ prefix: `${key.split('/')[0]}/`, limit: MAX_PHOTOS + 1 });
+      if (mine.objects.length >= MAX_PHOTOS && !mine.objects.some((o) => o.key === key)) return json({ error: 'too many photos' }, 403);
+      await this.env.PHOTOS.put(key, bytes);
+      return json({ ok: true });
+    }
+    return json({ error: 'method not allowed' }, 405);
   }
 
   private async push(req: Request, rec: Rec | undefined): Promise<Response> {
@@ -320,7 +353,7 @@ export default {
     const g = url.pathname.match(/^\/google\/(open|link|share)$/);
     if (g && req.method === 'POST') return reply(await google(req, env, g[1]));
 
-    const m = url.pathname.match(/^\/v\/([0-9a-f]{32})(\/ws|\/push|\/invite|\/invite\/[0-9a-f]{32})?$/);
+    const m = url.pathname.match(/^\/v\/([0-9a-f]{32})(\/ws|\/push|\/invite|\/invite\/[0-9a-f]{32}|\/photo\/[0-9a-f]{32})?$/);
     if (!m) return reply(json({ error: 'not found' }, 404));
     const proto = (req.headers.get('Sec-WebSocket-Protocol') ?? '').split(',').map((x) => x.trim()).find((x) => x.startsWith('bearer.'));
     const token = proto ? proto.slice(7) : (req.headers.get('Authorization') ?? '').replace(/^Bearer /, '');
