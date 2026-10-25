@@ -14,7 +14,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png', 'icon.svg', 'icon-maskable-512.png'],
       manifest: {
-        id: './',
+        id: 'plant-care-tracker',
         categories: ['lifestyle', 'productivity'],
         name: 'Plant Care',
         short_name: 'Plants',
